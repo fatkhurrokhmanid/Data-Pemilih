@@ -1,45 +1,1625 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pedataan Warga</title>
-  <link rel="icon" href="https://i.ibb.co.com/qqFKFSM/LOGO-INDRAMAYU.png" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #eee;
-      overflow: hidden; /* Mencegah scroll ganda */
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Data Warga & Pemilih — Segeran Kidul</title>
+<link rel="icon" href="https://i.ibb.co.com/qqFKFSM/LOGO-INDRAMAYU.png" />
 
-    .iframe-container {
-      width: 100%;
-      height: 100dvh; /* Menggunakan dvh agar pas di mobile browser */
-      overflow: hidden;
-    }
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-    iframe {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border: none;
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: { ink: { 900: '#0b1020', 800: '#0f172a', 700: '#1e293b' } },
+      boxShadow: {
+        glow: '0 0 40px -10px rgba(99,102,241,0.55)',
+        card: '0 10px 30px -10px rgba(2,6,23,0.6)'
+      }
     }
-  </style>
+  }
+}
+</script>
+
+<style>
+  :root { color-scheme: dark; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,0.18), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(99,102,241,0.20), transparent 60%),
+      radial-gradient(900px 500px at 50% 120%, rgba(14,165,233,0.15), transparent 60%),
+      linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
+    color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#4f46e5,#3b82f6); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#6366f1,#60a5fa); }
+
+  .glass {
+    background: linear-gradient(160deg, rgba(30,41,59,0.72), rgba(15,23,42,0.55));
+    border: 1px solid rgba(148,163,184,0.14);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+  .glass-soft {
+    background: linear-gradient(160deg, rgba(30,41,59,0.55), rgba(15,23,42,0.35));
+    border: 1px solid rgba(148,163,184,0.10);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .grad-text {
+    background: linear-gradient(90deg,#60a5fa 0%,#818cf8 50%,#a78bfa 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .grad-btn {
+    background-image: linear-gradient(135deg,#4f46e5 0%,#3b82f6 55%,#0ea5e9 100%);
+    box-shadow: 0 10px 30px -10px rgba(79,70,229,0.7);
+  }
+  .grad-btn:hover { filter: brightness(1.08); }
+
+  .tbl { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .tbl thead th {
+    position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, rgba(30,41,59,0.95), rgba(15,23,42,0.9));
+    color: #c7d2fe; font-size: 11px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; padding: 10px 10px; text-align: left;
+    border-bottom: 1px solid rgba(99,102,241,0.25);
+    backdrop-filter: blur(8px);
+  }
+  .tbl tbody td { padding: 9px 10px; border-bottom: 1px solid rgba(148,163,184,0.08); font-size: 12px; }
+  .tbl tbody tr { transition: background-color .15s ease; }
+  .tbl tbody tr:hover { background: rgba(99,102,241,0.08); }
+  .tbl tbody tr.group-divider { border-top: 2px solid rgba(99,102,241,0.4); }
+
+  .field {
+    background: rgba(15,23,42,0.6);
+    border: 1px solid rgba(148,163,184,0.2);
+    color: #e2e8f0;
+    border-radius: 10px;
+    transition: all .15s ease;
+  }
+  .field:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); }
+  .field::placeholder { color: #64748b; }
+  .field option { background: #0f172a; color: #e2e8f0; }
+  select.field { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #818cf8 50%), linear-gradient(135deg, #818cf8 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+  .animate-shake { animation: shake .4s cubic-bezier(.06,.07,.19,.97) both; }
+  @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .floaty { animation: floaty 4s ease-in-out infinite; }
+
+  @media (max-width: 900px) {
+    .tbl thead { display: none; }
+    .tbl, .tbl tbody, .tbl tr, .tbl td { display: block; width: 100%; }
+    .tbl tr {
+      background: linear-gradient(160deg, rgba(30,41,59,0.75), rgba(15,23,42,0.55));
+      border: 1px solid rgba(99,102,241,0.22);
+      border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+      box-shadow: 0 8px 24px -12px rgba(2,6,23,0.8);
+    }
+    .tbl td {
+      border: none !important;
+      border-bottom: 1px dashed rgba(148,163,184,0.14) !important;
+      padding: 10px 14px !important;
+      text-align: right !important;
+      position: relative;
+      padding-left: 46% !important;
+      font-size: 12px;
+      min-height: 34px;
+    }
+    .tbl td:last-child { border-bottom: none !important; }
+    .tbl td::before {
+      content: attr(data-label);
+      position: absolute; left: 14px; top: 10px; width: 40%;
+      text-align: left; font-weight: 700; color: #a5b4fc;
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .tbl tbody tr.group-divider { border-top: none; }
+  }
+
+  .nav-item { position: relative; transition: all .2s ease; }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(79,70,229,0.35), rgba(59,130,246,0.25));
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(129,140,248,0.5), 0 6px 20px -8px rgba(79,70,229,0.7);
+  }
+  .nav-item.active::before {
+    content:""; position:absolute; left:0; top:15%; bottom:15%; width:3px; border-radius:0 3px 3px 0;
+    background: linear-gradient(180deg,#60a5fa,#a78bfa);
+  }
+
+  .scroll-area { scrollbar-gutter: stable; }
+
+  @media (max-width: 768px) {
+    .rincian-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .rincian-wrap table { min-width: 640px; }
+  }
+
+  .stat-card { position: relative; overflow: hidden; }
+  .stat-card::after {
+    content:""; position:absolute; inset:0; border-radius: inherit; padding:1px;
+    background: linear-gradient(135deg, rgba(96,165,250,.5), transparent 40%, rgba(167,139,250,.4));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events:none;
+  }
+</style>
 </head>
-<body>
-  <div class="iframe-container">
-    <iframe
-      id="app"
-      src="https://script.google.com/macros/s/AKfycbw0BtyXIKiBfka7ffkP11a8_x0XSnfJQwpBQmKxg933ilDwgwMnqwnG_F1-ZPM33O00Rw/exec"
-      scrolling="yes"
-      allowfullscreen="true"
-      webkitallowfullscreen="true"
-      mozallowfullscreen="true"
-      allow="fullscreen; camera; microphone; display-capture; geolocation;">
-    </iframe>
+
+<body class="min-h-screen antialiased relative overflow-hidden">
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzwXQmEissGbVZAh_FsP629MFicmpiNtemEd8ocALrGN8M7NE06YMTiTvLVdGdlcEjmNA/exec";
+  const APP_PASSWORD = "reangadmin123";
+  const DAFTAR_RW  = ["001","002","003","004","005"];
+  const DAFTAR_RT  = ["001","002","003","004","005","006"];
+  const DAFTAR_TPS = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+</script>
+
+<div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+  <div class="absolute -top-32 -left-24 w-[420px] h-[420px] rounded-full bg-indigo-600/20 blur-3xl"></div>
+  <div class="absolute top-1/3 -right-24 w-[420px] h-[420px] rounded-full bg-sky-500/20 blur-3xl"></div>
+  <div class="absolute -bottom-32 left-1/3 w-[420px] h-[420px] rounded-full bg-violet-600/15 blur-3xl"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4 transition-all duration-500">
+  <div id="login-card" class="glass rounded-3xl shadow-2xl max-w-md w-full p-7 sm:p-9 relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-56 h-56 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-56 h-56 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative">
+      <div class="w-16 h-16 rounded-2xl grad-btn flex items-center justify-center mx-auto mb-5 floaty">
+        <i class="fa-solid fa-shield-halved text-2xl text-white"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-center text-white">Aplikasi Terkunci</h2>
+      <p class="text-xs text-slate-400 mt-1.5 mb-7 text-center">Masukkan kata sandi untuk mengakses Dashboard Pendataan Warga</p>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div class="relative">
+          <input type="password" id="password-input" placeholder="••••••••" required autocomplete="current-password"
+            class="field w-full pl-11 pr-11 py-3.5 text-sm font-mono tracking-[0.35em] text-center" />
+          <i class="fa-solid fa-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+          <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-300 transition">
+            <i id="password-toggle-icon" class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+        <div id="login-error" class="text-xs text-rose-400 font-medium hidden items-center justify-center gap-1.5">
+          <i class="fa-solid fa-circle-exclamation"></i><span>Kata sandi salah! Silakan coba lagi.</span>
+        </div>
+        <button type="submit" class="w-full py-3.5 grad-btn text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition">
+          <span>Buka Akses</span><i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+      <p class="text-[11px] text-slate-500 mt-7 text-center">Sistem Informasi Data Pemilih — Desa Segeran Kidul</p>
+    </div>
   </div>
+</div>
+
+<div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+
+<div id="app-container" class="flex flex-1 h-screen overflow-hidden hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 glass flex flex-col transition-all duration-300 transform -translate-x-full md:translate-x-0 shrink-0 shadow-2xl overflow-y-auto scroll-area border-r border-slate-700/40">
+    <div class="p-5 border-b border-slate-700/50 flex items-center justify-between">
+      <div class="flex items-center gap-3 overflow-hidden">
+        <div class="w-11 h-11 rounded-xl grad-btn flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-users-rectangle text-white text-lg"></i>
+        </div>
+        <div class="truncate">
+          <h1 class="font-extrabold text-[15px] tracking-wide text-white leading-tight truncate">Data Pemilih</h1>
+          <p class="text-[11px] grad-text font-semibold truncate">Desa Segeran Kidul</p>
+        </div>
+      </div>
+      <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <nav class="flex-1 p-3.5 space-y-1">
+      <p class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold">Menu Utama</p>
+      <button id="nav-chart" onclick="switchView('chart')" class="nav-item active w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-chart-pie w-5 text-center text-indigo-300"></i><span>Grafik & Statistik</span>
+      </button>
+      <button id="nav-table" onclick="switchView('table')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-users-viewfinder w-5 text-center text-sky-300"></i><span>Data Warga & Pemilih</span>
+      </button>
+      <button id="nav-rincian" onclick="switchView('rincian')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-clipboard-list w-5 text-center text-amber-300"></i><span>Rincian per RT/RW</span>
+      </button>
+      <button id="nav-tps" onclick="switchView('tps')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-clipboard-list w-5 text-center text-amber-300"></i><span>Rincian per TPS</span>
+      </button>
+
+      <p class="px-3 pt-4 pb-1 text-[10px] uppercase tracking-widest text-slate-500 font-bold">Aksi</p>
+      <button onclick="openAddWargaModal()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-user-plus w-5 text-center text-emerald-300"></i><span>Tambah Data Warga</span>
+      </button>
+      <button onclick="exportDataToPDF()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-file-pdf w-5 text-center text-rose-300"></i><span>Ekspor Data (PDF)</span>
+      </button>
+      <button onclick="exportRincianRT_RWToPDF()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-file-arrow-down w-5 text-center text-amber-300"></i><span>Ekspor Rincian RT/RW (PDF)</span>
+      </button>
+      <button onclick="exportRincianTpsToPDF()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm">
+        <i class="fa-solid fa-file-arrow-down w-5 text-center text-amber-300"></i><span>Ekspor Rincian TPS (PDF)</span>
+      </button>
+    </nav>
+
+    <div class="p-3.5 border-t border-slate-700/50">
+      <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-rose-500/10 text-rose-300 hover:bg-rose-500/25 hover:text-rose-200 font-semibold text-xs transition border border-rose-500/20">
+        <i class="fa-solid fa-right-from-bracket"></i><span>Kunci Aplikasi</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-y-auto scroll-area">
+
+    <header class="glass-soft sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center justify-between border-b border-slate-700/40">
+      <div class="flex items-center gap-3 min-w-0">
+        <button onclick="toggleSidebar()" class="p-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition md:hidden">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <h2 id="header-title" class="text-[15px] sm:text-base font-bold text-white truncate">Grafik & Statistik Pendataan Warga</h2>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="fetchDataFromSheet()" class="glass-soft hover:bg-white/10 text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-600/40">
+          <i class="fa-solid fa-rotate"></i><span class="hidden sm:inline">Sinkronisasi</span>
+        </button>
+        <button onclick="openAddWargaModal()" class="grad-btn text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-plus"></i><span class="hidden sm:inline">Tambah Data</span>
+        </button>
+        <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 p-2 rounded-xl text-xs transition border border-rose-500/20">
+          <i class="fa-solid fa-lock"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="p-4 sm:p-6 space-y-6 flex-1">
+
+      <!-- VIEW 1: CHART -->
+      <div id="view-chart" class="space-y-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="stat-card glass rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Warga</p>
+              <h3 id="stat-total" class="text-2xl sm:text-3xl font-extrabold mt-1 grad-text">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-blue-500/15 text-blue-300 flex items-center justify-center"><i class="fa-solid fa-users text-lg"></i></div>
+          </div>
+          <div class="stat-card glass rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Jumlah Pemilih</p>
+              <h3 id="stat-pemilih" class="text-2xl sm:text-3xl font-extrabold mt-1 text-emerald-300">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center"><i class="fa-solid fa-user-check text-lg"></i></div>
+          </div>
+          <div class="stat-card glass rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bukan Pemilih</p>
+              <h3 id="stat-bukan" class="text-2xl sm:text-3xl font-extrabold mt-1 text-rose-300">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-rose-500/15 text-rose-300 flex items-center justify-center"><i class="fa-solid fa-user-xmark text-lg"></i></div>
+          </div>
+          <div class="stat-card glass rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Abu-Abu</p>
+              <h3 id="stat-abu" class="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-300">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-slate-500/15 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-user text-lg"></i></div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="glass rounded-2xl p-4 sm:p-5">
+            <h4 class="text-sm font-bold text-white mb-3"><i class="fa-solid fa-chart-column text-indigo-300 mr-2"></i> Status Hak Pilih per RT/RW</h4>
+            <div class="h-64 sm:h-72 relative"><canvas id="chartPemilih"></canvas></div>
+          </div>
+
+          <div class="glass rounded-2xl p-4 sm:p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+              <h4 class="text-sm font-bold text-white"><i class="fa-solid fa-chart-bar text-violet-300 mr-2"></i> Grafik Keterangan & Status Pemilih</h4>
+              <div class="flex items-center gap-3 text-xs flex-wrap">
+                <span class="flex items-center font-medium text-emerald-300"><span class="w-3 h-3 inline-block rounded-sm bg-emerald-400 mr-1.5"></span> Pemilih</span>
+                <span class="flex items-center font-medium text-slate-300"><span class="w-3 h-3 inline-block rounded-sm bg-slate-400 mr-1.5"></span> Abu-Abu</span>
+                <span class="flex items-center font-medium text-rose-300"><span class="w-3 h-3 inline-block rounded-sm bg-rose-400 mr-1.5"></span> Bukan Pemilih</span>
+              </div>
+            </div>
+            <div class="min-h-[300px] h-72 sm:h-80 relative"><canvas id="chartKeterangan"></canvas></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="glass rounded-2xl p-4 sm:p-5">
+              <h4 class="text-sm font-bold text-white mb-3"><i class="fa-solid fa-venus-mars text-sky-300 mr-2"></i> Jenis Kelamin</h4>
+              <div class="h-56 relative"><canvas id="chartGender"></canvas></div>
+            </div>
+            <div class="glass rounded-2xl p-4 sm:p-5">
+              <h4 class="text-sm font-bold text-white mb-3"><i class="fa-solid fa-cake-candles text-amber-300 mr-2"></i> Distribusi Umur</h4>
+              <div class="h-56 relative"><canvas id="chartUmur"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: TABLE -->
+      <div id="view-table" class="space-y-6 hidden">
+        <div class="glass rounded-2xl overflow-hidden flex flex-col">
+          <div class="p-4 border-b border-slate-700/40 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+            <div class="relative lg:col-span-2">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+              <input type="text" id="search-input" onkeyup="filterData()" placeholder="Cari Nama, No HP, Desa..." class="field w-full pl-9 pr-3 py-2.5 text-xs" />
+            </div>
+            <select id="filter-status" onchange="filterData()" class="field w-full py-2.5 px-3 text-xs">
+              <option value="ALL">-- Semua Status --</option>
+              <option value="Pemilih">Pemilih</option>
+              <option value="Abu-Abu">Abu-Abu</option>
+              <option value="Bukan Pemilih">Bukan Pemilih</option>
+            </select>
+            <select id="filter-rt" onchange="filterData()" class="field w-full py-2.5 px-3 text-xs">
+              <option value="ALL">-- Semua RT --</option>
+            </select>
+            <select id="filter-rw" onchange="filterData()" class="field w-full py-2.5 px-3 text-xs">
+              <option value="ALL">-- Semua RW --</option>
+            </select>
+            <select id="filter-tps" onchange="filterData()" class="field w-full py-2.5 px-3 text-xs">
+              <option value="ALL">-- Semua TPS --</option>
+            </select>
+            <button onclick="resetFilters()" class="w-full py-2.5 px-3 bg-slate-700/40 hover:bg-slate-700/60 text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-600/40 lg:col-span-1">
+              <i class="fa-solid fa-rotate-left"></i><span>Reset Filter</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto min-h-[350px] p-2">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th class="text-center w-12">NO</th>
+                  <th class="text-center">ID</th>
+                  <th>NAMA</th>
+                  <th class="text-center">JK</th>
+                  <th class="text-center">USIA</th>
+                  <th>DESA</th>
+                  <th class="text-center">RT</th>
+                  <th class="text-center">RW</th>
+                  <th class="text-center">TPS</th>
+                  <th>NO HP</th>
+                  <th class="text-center min-w-[150px]">STATUS PEMILIH</th>
+                  <th class="min-w-[180px]">KETERANGAN</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="px-4 py-3 border-t border-slate-700/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs bg-slate-900/40">
+            <div class="text-slate-400" id="pagination-info">
+              Menampilkan <span class="font-semibold text-white" id="page-start">0</span> -
+              <span class="font-semibold text-white" id="page-end">0</span> dari
+              <span class="font-semibold text-white" id="total-items">0</span> data
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400">Tampilkan:</span>
+              <select id="items-per-page" onchange="changeItemsPerPage()" class="field px-2.5 py-1.5 text-xs font-semibold">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <div class="flex gap-1 pl-2" id="pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: RINCIAN per RT/RW -->
+      <div id="view-rincian" class="space-y-6 hidden">
+        <div class="glass rounded-2xl overflow-hidden flex flex-col">
+          <div class="p-4 border-b border-slate-700/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-bold text-white text-sm"><i class="fa-solid fa-clipboard-list text-amber-300 mr-2"></i> Tabel Rincian Keterangan Pemilih per RT/RW</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Rekapitulasi jumlah warga berdasarkan kategori Keterangan di masing-masing kombinasi RT/RW.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <select id="rincian-filter-status" onchange="renderRincianPemilih()" class="field py-2 px-3 text-xs">
+                <option value="ALL">-- Semua Status --</option>
+                <option value="Pemilih">Khusus Pemilih</option>
+                <option value="Abu-Abu">Khusus Abu-Abu</option>
+                <option value="Bukan Pemilih">Khusus Bukan Pemilih</option>
+              </select>
+              <input type="text" id="rincian-search" onkeyup="renderRincianPemilih()" placeholder="Cari Keterangan..." class="field py-2 px-3 text-xs" />
+              <button onclick="exportRincianRT_RWToPDF()" class="py-2 px-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-rose-600/25">
+                <i class="fa-solid fa-file-pdf"></i><span>Download PDF</span>
+              </button>
+            </div>
+          </div>
+          <div class="rincian-wrap p-2">
+            <table class="tbl">
+              <thead><tr id="rincian-table-header"></tr></thead>
+              <tbody id="rincian-table-body"></tbody>
+              <tfoot id="rincian-table-footer" class="font-bold text-white"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: RINCIAN per TPS -->
+      <div id="view-tps" class="space-y-6 hidden">
+        <div class="glass rounded-2xl overflow-hidden flex flex-col">
+          <div class="p-4 border-b border-slate-700/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-bold text-white text-sm"><i class="fa-solid fa-clipboard-list text-amber-300 mr-2"></i> Tabel Rincian Pemilih per TPS</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Rekapitulasi jumlah warga berdasarkan kategori Keterangan di masing-masing TPS.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <select id="tps-filter-status" onchange="renderRincianTps()" class="field py-2 px-3 text-xs">
+                <option value="ALL">-- Semua Status --</option>
+                <option value="Pemilih">Khusus Pemilih</option>
+                <option value="Abu-Abu">Khusus Abu-Abu</option>
+                <option value="Bukan Pemilih">Khusus Bukan Pemilih</option>
+              </select>
+              <input type="text" id="tps-search" onkeyup="renderRincianTps()" placeholder="Cari Keterangan..." class="field py-2 px-3 text-xs" />
+              <button onclick="exportRincianTpsToPDF()" class="py-2 px-3 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-sky-600/25">
+                <i class="fa-solid fa-file-pdf"></i><span>Download PDF</span>
+              </button>
+            </div>
+          </div>
+          <div class="rincian-wrap p-2">
+            <table class="tbl">
+              <thead><tr id="tps-table-header"></tr></thead>
+              <tbody id="tps-table-body"></tbody>
+              <tfoot id="tps-table-footer" class="font-bold text-white"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL ADD -->
+<div id="modal-add" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+  <div class="glass rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] border border-slate-600/40">
+    <div class="px-5 py-4 flex items-center justify-between border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/20 to-sky-600/10">
+      <h3 class="font-bold text-sm text-white flex items-center"><i class="fa-solid fa-user-plus text-indigo-300 mr-2"></i> Tambah Data Warga Baru</h3>
+      <button onclick="closeAddWargaModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form id="form-tambah-warga" onsubmit="saveWarga(event)" class="p-5 overflow-y-auto space-y-3 text-xs scroll-area">
+      <div>
+        <label class="block font-semibold text-slate-300 mb-1.5">Nama Lengkap</label>
+        <input type="text" id="add-nama" required placeholder="Nama Lengkap Warga" class="field w-full px-3 py-2.5" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1.5">Jenis Kelamin</label>
+          <select id="add-jk" class="field w-full px-3 py-2.5">
+            <option value="L">Laki-Laki (L)</option>
+            <option value="P">Perempuan (P)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1.5">Usia</label>
+          <input type="number" id="add-usia" required min="0" max="120" placeholder="Contoh: 35" class="field w-full px-3 py-2.5" />
+        </div>
+      </div>
+      <div>
+        <label class="block font-semibold text-slate-300 mb-1.5">Desa</label>
+        <input type="text" id="add-desa" required placeholder="Contoh: SEGERAN KIDUL" class="field w-full px-3 py-2.5" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1.5">RT</label>
+          <select id="add-rt" class="field w-full px-3 py-2.5"></select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1.5">RW</label>
+          <select id="add-rw" class="field w-full px-3 py-2.5"></select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1.5">TPS</label>
+          <select id="add-tps" class="field w-full px-3 py-2.5"></select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1.5">No HP</label>
+          <input type="text" id="add-nohp" placeholder="08xxxxxxxxxx" class="field w-full px-3 py-2.5" />
+        </div>
+      </div>
+      <div>
+        <label class="block font-semibold text-slate-300 mb-1.5">Status Pemilih</label>
+        <select id="add-status" onchange="toggleAddKeteranganField()" class="field w-full px-3 py-2.5">
+          <option value="Pemilih">Pemilih</option>
+          <option value="Abu-Abu" selected>Abu-Abu</option>
+          <option value="Bukan Pemilih">Bukan Pemilih</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-semibold text-slate-300 mb-1.5">Keterangan</label>
+        <input type="text" id="add-keterangan" disabled placeholder="Aktif bila status Pemilih" class="field w-full px-3 py-2.5 opacity-60 cursor-not-allowed" />
+      </div>
+      <div class="pt-3 flex justify-end gap-2 border-t border-slate-700/50 mt-4">
+        <button type="button" onclick="closeAddWargaModal()" class="px-4 py-2 bg-slate-700/40 hover:bg-slate-700/60 text-slate-200 rounded-xl font-semibold transition">Batal</button>
+        <button type="submit" class="px-4 py-2 grad-btn text-white rounded-xl font-semibold transition">Simpan Data</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+  <div class="glass rounded-xl shadow-2xl px-4 py-3 flex items-center gap-3 text-xs border border-indigo-500/30">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-300 text-base"></i>
+    <span id="toast-message" class="font-medium text-white">Notifikasi</span>
+  </div>
+</div>
+
+<script>
+let dataWarga = [];
+let activeView = 'chart';
+let currentPage = 1;
+let itemsPerPage = 25;
+let filteredData = [];
+
+let chartPemilihInstance = null;
+let chartGenderInstance = null;
+let chartUmurInstance = null;
+let chartKeteranganInstance = null;
+
+if (window.Chart) {
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.borderColor = 'rgba(148,163,184,0.12)';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.boxWidth = 8;
+  Chart.defaults.plugins.legend.labels.padding = 14;
+}
+
+window.addEventListener('load', () => {
+  if (sessionStorage.getItem('isLoggedIn') === 'true') unlockApplication();
+  else document.getElementById('password-input')?.focus();
+});
+
+function handleLogin(event) {
+  event.preventDefault();
+  const input = document.getElementById('password-input');
+  const errorMsg = document.getElementById('login-error');
+  const loginCard = document.getElementById('login-card');
+  if (input && input.value === APP_PASSWORD) {
+    sessionStorage.setItem('isLoggedIn', 'true');
+    errorMsg?.classList.add('hidden');
+    errorMsg?.classList.remove('flex');
+    unlockApplication();
+    showToast('Selamat datang! Akses berhasil dibuka.');
+  } else {
+    errorMsg?.classList.remove('hidden');
+    errorMsg?.classList.add('flex');
+    loginCard?.classList.remove('animate-shake');
+    void loginCard?.offsetWidth;
+    loginCard?.classList.add('animate-shake');
+    if (input) { input.value = ''; input.focus(); }
+  }
+}
+
+function togglePasswordVisibility() {
+  const input = document.getElementById('password-input');
+  const icon = document.getElementById('password-toggle-icon');
+  if (!input || !icon) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
+
+function unlockApplication() {
+  const overlay = document.getElementById('login-overlay');
+  const appContainer = document.getElementById('app-container');
+  overlay?.classList.add('opacity-0', 'pointer-events-none');
+  setTimeout(() => overlay?.classList.add('hidden'), 500);
+  appContainer?.classList.remove('hidden');
+  document.body.classList.remove('overflow-hidden');
+  populateSelectOptions();
+  fetchDataFromSheet();
+  initCharts();
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('isLoggedIn');
+  const overlay = document.getElementById('login-overlay');
+  overlay?.classList.remove('hidden');
+  setTimeout(() => overlay?.classList.remove('opacity-0', 'pointer-events-none'), 10);
+  document.getElementById('app-container')?.classList.add('hidden');
+  const pwd = document.getElementById('password-input');
+  if (pwd) pwd.value = '';
+  const err = document.getElementById('login-error');
+  err?.classList.add('hidden');
+  err?.classList.remove('flex');
+  document.body.classList.add('overflow-hidden');
+  showToast('Aplikasi berhasil dikunci kembali.');
+}
+
+function populateSelectOptions() {
+  const filterRt = document.getElementById('filter-rt');
+  const filterRw = document.getElementById('filter-rw');
+  const filterTps = document.getElementById('filter-tps');
+  const addRt = document.getElementById('add-rt');
+  const addRw = document.getElementById('add-rw');
+  const addTps = document.getElementById('add-tps');
+
+  const rtOptions = DAFTAR_RT.map(rt => `<option value="${rt}">RT ${rt}</option>`).join('');
+  const rwOptions = DAFTAR_RW.map(rw => `<option value="${rw}">RW ${rw}</option>`).join('');
+  const tpsOptions = DAFTAR_TPS.map(tps => `<option value="${tps}">TPS ${tps}</option>`).join('');
+
+  if (filterRt) filterRt.innerHTML = `<option value="ALL">-- Semua RT --</option>` + rtOptions;
+  if (filterRw) filterRw.innerHTML = `<option value="ALL">-- Semua RW --</option>` + rwOptions;
+  if (filterTps) filterTps.innerHTML = `<option value="ALL">-- Semua TPS --</option>` + tpsOptions;
+  if (addRt) addRt.innerHTML = rtOptions;
+  if (addRw) addRw.innerHTML = rwOptions;
+  if (addTps) addTps.innerHTML = tpsOptions;
+}
+
+function switchView(view) {
+  activeView = view;
+  ['view-chart','view-table','view-rincian','view-tps'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+  ['nav-chart','nav-table','nav-rincian','nav-tps'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+
+  const headerTitle = document.getElementById('header-title');
+
+  if (view === 'chart') {
+    document.getElementById('view-chart')?.classList.remove('hidden');
+    document.getElementById('nav-chart')?.classList.add('active');
+    if (headerTitle) headerTitle.innerText = "Grafik & Statistik Pendataan Warga";
+    setTimeout(() => {
+      chartPemilihInstance?.resize();
+      chartGenderInstance?.resize();
+      chartUmurInstance?.resize();
+      chartKeteranganInstance?.resize();
+    }, 60);
+  } else if (view === 'table') {
+    document.getElementById('view-table')?.classList.remove('hidden');
+    document.getElementById('nav-table')?.classList.add('active');
+    if (headerTitle) headerTitle.innerText = "Daftar Pemilih & Data Warga";
+  } else if (view === 'rincian') {
+    document.getElementById('view-rincian')?.classList.remove('hidden');
+    document.getElementById('nav-rincian')?.classList.add('active');
+    if (headerTitle) headerTitle.innerText = "Rincian Data Pemilih & Keterangan per RT/RW";
+    renderRincianPemilih();
+  } else if (view === 'tps') {
+    document.getElementById('view-tps')?.classList.remove('hidden');
+    document.getElementById('nav-tps')?.classList.add('active');
+    if (headerTitle) headerTitle.innerText = "Rincian Data Pemilih & Keterangan per TPS";
+    renderRincianTps();
+  }
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (window.innerWidth < 768) {
+    sidebar?.classList.toggle('-translate-x-full');
+    backdrop?.classList.toggle('hidden');
+  } else {
+    sidebar?.classList.toggle('md:-ml-72');
+    setTimeout(() => {
+      chartPemilihInstance?.resize();
+      chartGenderInstance?.resize();
+      chartUmurInstance?.resize();
+      chartKeteranganInstance?.resize();
+    }, 305);
+  }
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function fetchDataFromSheet() {
+  if (!API_URL || API_URL.includes("YOUR_APPS_SCRIPT")) {
+    showToast("URL Apps Script belum disetel!");
+    return;
+  }
+  showToast("Mensinkronkan data dengan Google Sheet...");
+  fetch(API_URL + "?action=get")
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === "success" && res.data) {
+        dataWarga = res.data;
+        filterData();
+        showToast("Data berhasil disinkronkan! Total: " + dataWarga.length + " warga");
+      } else {
+        throw new Error(res.message || "Gagal mengambil data");
+      }
+    })
+    .catch(err => {
+      console.error("Gagal sinkron:", err);
+      showToast("Gagal terhubung ke Google Sheet.");
+    });
+}
+
+function filterData() {
+  const searchVal = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
+  const statusVal = document.getElementById('filter-status')?.value || 'ALL';
+  const rtVal = document.getElementById('filter-rt')?.value || 'ALL';
+  const rwVal = document.getElementById('filter-rw')?.value || 'ALL';
+  const tpsVal = document.getElementById('filter-tps')?.value || 'ALL';
+
+  filteredData = dataWarga.filter(item => {
+    const nama = (item.nama || '').toLowerCase();
+    const desa = (item.desa || '').toLowerCase();
+    const nohp = String(item.nohp || '');
+    const ket = (item.keterangan || '').toLowerCase();
+
+    const matchSearch = nama.includes(searchVal) || desa.includes(searchVal) || nohp.includes(searchVal) || ket.includes(searchVal);
+    const matchStatus = statusVal === 'ALL' || item.statusPemilih === statusVal;
+    const matchRt = rtVal === 'ALL' || String(item.rt).padStart(3,'0') === rtVal;
+    const matchRw = rwVal === 'ALL' || String(item.rw).padStart(3,'0') === rwVal;
+    const matchTps = tpsVal === 'ALL' || String(item.tps).padStart(2,'0') === tpsVal;
+
+    return matchSearch && matchStatus && matchRt && matchRw && matchTps;
+  });
+
+  filteredData.sort((a, b) => {
+    const rtA = String(a.rt || '').padStart(3,'0');
+    const rtB = String(b.rt || '').padStart(3,'0');
+    if (rtA !== rtB) return rtA.localeCompare(rtB);
+    return String(a.nama || '').localeCompare(String(b.nama || ''));
+  });
+
+  currentPage = 1;
+  renderDashboard();
+}
+
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-status').value = 'ALL';
+  document.getElementById('filter-rt').value = 'ALL';
+  document.getElementById('filter-rw').value = 'ALL';
+  document.getElementById('filter-tps').value = 'ALL';
+  filterData();
+}
+
+function renderDashboard() {
+  renderTable(filteredData);
+  updateStats(filteredData);
+  updateCharts(filteredData);
+  if (activeView === 'rincian') renderRincianPemilih();
+  if (activeView === 'tps') renderRincianTps();
+}
+
+/* ============================================================
+   Helpers kombinasi RT/RW
+============================================================ */
+function getRTRWKey(w) {
+  const rt = String(w.rt || '').padStart(3, '0');
+  const rw = String(w.rw || '').padStart(3, '0');
+  return `${rt}/${rw}`;
+}
+function labelRTRW(key) {
+  const [rt, rw] = key.split('/');
+  return `RT ${rt} / RW ${rw}`;
+}
+function getAllRTRWCombos(data) {
+  const set = new Set();
+  data.forEach(w => {
+    if (w.rt && w.rw) set.add(getRTRWKey(w));
+  });
+  return Array.from(set).sort();
+}
+
+/* ============================================================
+   RINCIAN per RT/RW
+============================================================ */
+function renderRincianPemilih() {
+  const headerEl = document.getElementById('rincian-table-header');
+  const bodyEl = document.getElementById('rincian-table-body');
+  const footerEl = document.getElementById('rincian-table-footer');
+
+  const statusFilter = document.getElementById('rincian-filter-status')?.value || 'ALL';
+  const searchVal = document.getElementById('rincian-search')?.value.toLowerCase().trim() || '';
+
+  let sourceData = dataWarga;
+  if (statusFilter !== 'ALL') sourceData = dataWarga.filter(w => w.statusPemilih === statusFilter);
+
+  const combos = getAllRTRWCombos(sourceData);
+
+  const ketMap = {};
+  sourceData.forEach(w => {
+    if (!w.rt || !w.rw) return;
+    let ket = (w.keterangan || '').trim();
+    if (!ket) ket = '(Tanpa Keterangan)';
+    if (searchVal && !ket.toLowerCase().includes(searchVal)) return;
+    if (!ketMap[ket]) ketMap[ket] = new Array(combos.length + 1).fill(0);
+    const idx = combos.indexOf(getRTRWKey(w));
+    if (idx >= 0) {
+      ketMap[ket][idx + 1]++;
+      ketMap[ket][0]++;
+    }
+  });
+
+  let headerHtml = `<th class="text-center w-10">NO</th>`;
+  headerHtml += `<th class="min-w-[180px]">KETERANGAN</th>`;
+  combos.forEach(c => {
+    const [rt, rw] = c.split('/');
+    headerHtml += `<th class="text-center min-w-[80px]">RT ${rt}<br><span class="text-[9px] text-slate-400 font-normal">RW ${rw}</span></th>`;
+  });
+  headerHtml += `<th class="text-center min-w-[80px] text-indigo-300">TOTAL</th>`;
+  headerEl.innerHTML = headerHtml;
+
+  const sortedKets = Object.keys(ketMap).sort((a, b) => ketMap[b][0] - ketMap[a][0]);
+
+  if (sortedKets.length === 0 || combos.length === 0) {
+    bodyEl.innerHTML = `<tr><td colspan="${combos.length + 3}" class="text-center py-10 text-slate-400">Tidak ada data rincian keterangan.</td></tr>`;
+    footerEl.innerHTML = '';
+    return;
+  }
+
+  const colTotals = new Array(combos.length + 1).fill(0);
+  let bodyHtml = '';
+  sortedKets.forEach((ket, idx) => {
+    const rowData = ketMap[ket];
+    colTotals[0] += rowData[0];
+    bodyHtml += `<tr>`;
+    bodyHtml += `<td class="text-center font-semibold text-slate-300">${idx + 1}</td>`;
+    bodyHtml += `<td class="font-semibold text-white">${escapeHtml(ket)}</td>`;
+    for (let i = 1; i <= combos.length; i++) {
+      const count = rowData[i];
+      colTotals[i] += count;
+      const badge = count > 0
+        ? `<span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-400/15 text-amber-200 border border-amber-400/25">${count}</span>`
+        : `<span class="text-slate-600">-</span>`;
+      bodyHtml += `<td class="text-center">${badge}</td>`;
+    }
+    bodyHtml += `<td class="text-center font-extrabold text-indigo-200 bg-indigo-500/10">${rowData[0]}</td>`;
+    bodyHtml += `</tr>`;
+  });
+  bodyEl.innerHTML = bodyHtml;
+
+  let footerHtml = `<tr>`;
+  footerHtml += `<td colspan="2" class="text-right font-extrabold uppercase text-slate-200 bg-slate-800/60">TOTAL PER RT/RW:</td>`;
+  for (let i = 1; i <= combos.length; i++) {
+    footerHtml += `<td class="text-center font-bold text-white bg-slate-800/60">${colTotals[i] > 0 ? colTotals[i] : '-'}</td>`;
+  }
+  footerHtml += `<td class="text-center font-extrabold text-indigo-200 bg-indigo-500/20">${colTotals[0]}</td>`;
+  footerHtml += `</tr>`;
+  footerEl.innerHTML = footerHtml;
+}
+
+/* ============================================================
+   RINCIAN per TPS
+============================================================ */
+function renderRincianTps() {
+  const headerEl = document.getElementById('tps-table-header');
+  const bodyEl = document.getElementById('tps-table-body');
+  const footerEl = document.getElementById('tps-table-footer');
+
+  const statusFilter = document.getElementById('tps-filter-status')?.value || 'ALL';
+  const searchVal = document.getElementById('tps-search')?.value.toLowerCase().trim() || '';
+
+  let sourceData = dataWarga;
+  if (statusFilter !== 'ALL') sourceData = dataWarga.filter(w => w.statusPemilih === statusFilter);
+
+  const ketMap = {};
+  sourceData.forEach(w => {
+    let ket = (w.keterangan || '').trim();
+    if (!ket) ket = '(Tanpa Keterangan)';
+    if (searchVal && !ket.toLowerCase().includes(searchVal)) return;
+    if (!ketMap[ket]) ketMap[ket] = new Array(DAFTAR_TPS.length + 1).fill(0);
+    const tpsNum = parseInt(w.tps, 10);
+    if (tpsNum >= 1 && tpsNum <= DAFTAR_TPS.length) {
+      ketMap[ket][tpsNum]++;
+      ketMap[ket][0]++;
+    }
+  });
+
+  let headerHtml = `<th class="text-center w-10">NO</th>`;
+  headerHtml += `<th class="min-w-[180px]">KETERANGAN</th>`;
+  for (let i = 1; i <= DAFTAR_TPS.length; i++) {
+    headerHtml += `<th class="text-center min-w-[52px]">TPS ${String(i).padStart(2, '0')}</th>`;
+  }
+  headerHtml += `<th class="text-center min-w-[80px] text-sky-300">TOTAL</th>`;
+  headerEl.innerHTML = headerHtml;
+
+  const sortedKets = Object.keys(ketMap).sort((a, b) => ketMap[b][0] - ketMap[a][0]);
+
+  if (sortedKets.length === 0) {
+    bodyEl.innerHTML = `<tr><td colspan="${DAFTAR_TPS.length + 3}" class="text-center py-10 text-slate-400">Tidak ada data rincian keterangan per TPS.</td></tr>`;
+    footerEl.innerHTML = '';
+    return;
+  }
+
+  const colTotals = new Array(DAFTAR_TPS.length + 1).fill(0);
+  let bodyHtml = '';
+  sortedKets.forEach((ket, idx) => {
+    const rowData = ketMap[ket];
+    colTotals[0] += rowData[0];
+    bodyHtml += `<tr>`;
+    bodyHtml += `<td class="text-center font-semibold text-slate-300">${idx + 1}</td>`;
+    bodyHtml += `<td class="font-semibold text-white">${escapeHtml(ket)}</td>`;
+    for (let tps = 1; tps <= DAFTAR_TPS.length; tps++) {
+      const count = rowData[tps];
+      colTotals[tps] += count;
+      const badge = count > 0
+        ? `<span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-sky-400/15 text-sky-200 border border-sky-400/25">${count}</span>`
+        : `<span class="text-slate-600">-</span>`;
+      bodyHtml += `<td class="text-center">${badge}</td>`;
+    }
+    bodyHtml += `<td class="text-center font-extrabold text-sky-200 bg-sky-500/10">${rowData[0]}</td>`;
+    bodyHtml += `</tr>`;
+  });
+  bodyEl.innerHTML = bodyHtml;
+
+  let footerHtml = `<tr>`;
+  footerHtml += `<td colspan="2" class="text-right font-extrabold uppercase text-slate-200 bg-slate-800/60">TOTAL PER TPS:</td>`;
+  for (let tps = 1; tps <= DAFTAR_TPS.length; tps++) {
+    footerHtml += `<td class="text-center font-bold text-white bg-slate-800/60">${colTotals[tps] > 0 ? colTotals[tps] : '-'}</td>`;
+  }
+  footerHtml += `<td class="text-center font-extrabold text-sky-200 bg-sky-500/20">${colTotals[0]}</td>`;
+  footerHtml += `</tr>`;
+  footerEl.innerHTML = footerHtml;
+}
+
+/* ============================================================
+   TABLE
+============================================================ */
+function renderTable(data) {
+  const tableBody = document.getElementById('table-body');
+  if (!tableBody) return;
+
+  const totalItems = data.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const pageData = data.slice(startIndex, endIndex);
+
+  if (pageData.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="12" class="px-6 py-10 text-center text-slate-400"><p class="font-medium">Data warga tidak ditemukan</p></td></tr>`;
+    renderPagination(0, 0, 0, 1);
+    return;
+  }
+
+  let html = '';
+  let prevRt = null;
+
+  pageData.forEach((warga, idx) => {
+    const absoluteIndex = startIndex + idx + 1;
+    const currentRt = String(warga.rt || '').padStart(3,'0');
+    let extraClass = "";
+    if (prevRt !== null && prevRt !== currentRt) extraClass = "group-divider";
+    prevRt = currentRt;
+
+    const isPemilih = warga.statusPemilih === 'Pemilih';
+    const isAbu = warga.statusPemilih === 'Abu-Abu';
+    const isBukan = warga.statusPemilih === 'Bukan Pemilih';
+    const ketVal = warga.keterangan || '';
+
+    const statusSelectClass = isPemilih
+      ? 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30 hover:bg-emerald-500/25'
+      : (isAbu
+          ? 'bg-slate-500/20 text-slate-200 border-slate-400/30 hover:bg-slate-500/30'
+          : 'bg-rose-500/15 text-rose-200 border-rose-400/30 hover:bg-rose-500/25');
+
+    html += `
+      <tr class="${extraClass}">
+        <td data-label="NO" class="text-center font-bold text-slate-500">${absoluteIndex}</td>
+        <td data-label="ID" class="text-center font-mono text-slate-400">${escapeHtml(warga.id)}</td>
+        <td data-label="NAMA" class="font-bold text-white">${escapeHtml(warga.nama)}</td>
+        <td data-label="JK" class="text-center"><span class="inline-block px-2 py-0.5 text-[11px] font-bold rounded-md ${warga.jk === 'L' ? 'bg-blue-500/15 text-blue-300 border border-blue-400/25' : 'bg-pink-500/15 text-pink-300 border border-pink-400/25'}">${escapeHtml(warga.jk || '-')}</span></td>
+        <td data-label="USIA" class="text-center font-semibold text-slate-300">${escapeHtml(String(warga.usia || 0))}</td>
+        <td data-label="DESA" class="text-slate-400">${escapeHtml(warga.desa || '-')}</td>
+        <td data-label="RT" class="text-center font-semibold text-slate-300">${escapeHtml(String(warga.rt || '-').padStart(3,'0'))}</td>
+        <td data-label="RW" class="text-center font-semibold text-slate-300">${escapeHtml(String(warga.rw || '-').padStart(3,'0'))}</td>
+        <td data-label="TPS" class="text-center font-semibold text-slate-300">${escapeHtml(String(warga.tps || '-').padStart(2,'0'))}</td>
+        <td data-label="NO HP" class="font-mono text-slate-400">${escapeHtml(warga.nohp || '-')}</td>
+        <td data-label="STATUS PEMILIH" class="text-center">
+          <select onchange="setStatusPemilih('${escapeHtml(String(warga.id))}', this.value)" class="w-full px-2.5 py-1.5 text-[11px] font-bold rounded-lg border transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 ${statusSelectClass}">
+            <option value="Pemilih" ${isPemilih ? 'selected' : ''}>Pemilih</option>
+            <option value="Abu-Abu" ${isAbu ? 'selected' : ''}>Abu-Abu</option>
+            <option value="Bukan Pemilih" ${isBukan ? 'selected' : ''}>Bukan Pemilih</option>
+          </select>
+        </td>
+        <td data-label="KETERANGAN">
+          ${isPemilih
+            ? `<input type="text" value="${escapeHtml(ketVal)}" onchange="updateKeterangan('${escapeHtml(String(warga.id))}', this.value)" placeholder="Ketik keterangan..." class="w-full px-2.5 py-1.5 text-[11px] bg-slate-900/60 border border-slate-600/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 placeholder:text-slate-500 transition">`
+            : `<input type="text" value="${escapeHtml(ketVal)}" disabled placeholder="Khusus Pemilih" class="w-full px-2.5 py-1.5 text-[11px] bg-slate-800/40 border border-slate-700/50 text-slate-500 rounded-lg cursor-not-allowed">`
+          }
+        </td>
+      </tr>`;
+  });
+  tableBody.innerHTML = html;
+  renderPagination(totalItems, startIndex + 1, endIndex, totalPages);
+}
+
+function setStatusPemilih(id, newStatus) {
+  const warga = dataWarga.find(w => String(w.id) === String(id));
+  if (!warga) return;
+  warga.statusPemilih = newStatus;
+  renderDashboard();
+  showToast(`Status <strong>${escapeHtml(warga.nama)}</strong> diubah menjadi <strong>${newStatus}</strong>`);
+
+  if (API_URL && !API_URL.includes("YOUR_APPS_SCRIPT")) {
+    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "updateStatus", id: id, statusPemilih: newStatus }) })
+      .catch(err => console.error("Error updateStatus:", err));
+  }
+}
+
+function updateKeterangan(id, newKeterangan) {
+  const warga = dataWarga.find(w => String(w.id) === String(id));
+  if (!warga) return;
+  warga.keterangan = newKeterangan;
+  renderDashboard();
+  showToast(`Keterangan <strong>${escapeHtml(warga.nama)}</strong> diperbarui`);
+
+  if (API_URL && !API_URL.includes("YOUR_APPS_SCRIPT")) {
+    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "updateKeterangan", id: id, keterangan: newKeterangan }) })
+      .catch(err => console.error("Error updateKeterangan:", err));
+  }
+}
+
+function renderPagination(totalItems, startItem, endItem, totalPages) {
+  document.getElementById('page-start').innerText = totalItems === 0 ? 0 : startItem;
+  document.getElementById('page-end').innerText = endItem;
+  document.getElementById('total-items').innerText = totalItems;
+
+  const buttonsEl = document.getElementById('pagination-buttons');
+  const baseBtn = 'px-2.5 py-1.5 rounded-lg font-semibold text-xs transition border';
+  let btnHtml = `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 1
+    ? 'disabled class="opacity-30 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/40 cursor-not-allowed"'
+    : `class="${baseBtn} bg-slate-800/60 border-slate-600/40 text-slate-200 hover:bg-slate-700/60"`}>&lt;</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      const activeCls = currentPage === i
+        ? 'grad-btn text-white border-transparent'
+        : 'bg-slate-800/60 border-slate-600/40 text-slate-200 hover:bg-slate-700/60';
+      btnHtml += `<button onclick="goToPage(${i})" class="${baseBtn} ${activeCls}">${i}</button>`;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      btnHtml += `<span class="px-1 text-slate-500">...</span>`;
+    }
+  }
+  btnHtml += `<button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0
+    ? 'disabled class="opacity-30 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/40 cursor-not-allowed"'
+    : `class="${baseBtn} bg-slate-800/60 border-slate-600/40 text-slate-200 hover:bg-slate-700/60"`}>&gt;</button>`;
+
+  buttonsEl.innerHTML = btnHtml;
+}
+
+function goToPage(page) {
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable(filteredData);
+}
+
+function changeItemsPerPage() {
+  itemsPerPage = parseInt(document.getElementById('items-per-page')?.value || '25', 10);
+  currentPage = 1;
+  renderTable(filteredData);
+}
+
+function updateStats(data) {
+  document.getElementById('stat-total').innerText = data.length;
+  document.getElementById('stat-pemilih').innerText = data.filter(w => w.statusPemilih === 'Pemilih').length;
+  document.getElementById('stat-bukan').innerText = data.filter(w => w.statusPemilih === 'Bukan Pemilih').length;
+  document.getElementById('stat-abu').innerText = data.filter(w => w.statusPemilih === 'Abu-Abu').length;
+}
+
+function initCharts() {
+  if (!window.Chart) return;
+
+  const ctxPemilih = document.getElementById('chartPemilih')?.getContext('2d');
+  const ctxGender = document.getElementById('chartGender')?.getContext('2d');
+  const ctxUmur = document.getElementById('chartUmur')?.getContext('2d');
+  const ctxKeterangan = document.getElementById('chartKeterangan')?.getContext('2d');
+
+  if (ctxPemilih && !chartPemilihInstance) {
+    chartPemilihInstance = new Chart(ctxPemilih, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Pemilih', data: [], backgroundColor: 'rgba(16,185,129,0.85)', borderColor: '#10b981', borderWidth: 1, borderRadius: 6, maxBarThickness: 22 },
+          { label: 'Abu-Abu', data: [], backgroundColor: 'rgba(148,163,184,0.85)', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 6, maxBarThickness: 22 },
+          { label: 'Bukan Pemilih', data: [], backgroundColor: 'rgba(244,63,94,0.85)', borderColor: '#f43f5e', borderWidth: 1, borderRadius: 6, maxBarThickness: 22 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 18 } },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 90 }, grid: { color: 'rgba(148,163,184,0.06)' } },
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(148,163,184,0.08)' } }
+        }
+      },
+      plugins: [{
+        id: 'pemilihTopValueLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.hidden) {
+              meta.data.forEach((bar, index) => {
+                const val = dataset.data[index];
+                if (val > 0) {
+                  ctx.save();
+                  ctx.font = 'bold 9px Inter, sans-serif';
+                  ctx.fillStyle = datasetIndex === 0 ? '#6ee7b7' : (datasetIndex === 1 ? '#cbd5e1' : '#fda4af');
+                  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                  ctx.fillText(val, bar.x, bar.y - 2);
+                  ctx.restore();
+                }
+              });
+            }
+          });
+        }
+      }]
+    });
+  }
+
+  if (ctxGender && !chartGenderInstance) {
+    chartGenderInstance = new Chart(ctxGender, {
+      type: 'doughnut',
+      data: {
+        labels: ['Laki-Laki', 'Perempuan'],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ['rgba(59,130,246,0.9)', 'rgba(236,72,153,0.9)'],
+          borderColor: ['#3b82f6', '#ec4899'],
+          borderWidth: 2,
+          hoverOffset: 8
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+
+  if (ctxUmur && !chartUmurInstance) {
+    chartUmurInstance = new Chart(ctxUmur, {
+      type: 'bar',
+      data: {
+        labels: ['< 17 Thn', '17-30 Thn', '31-50 Thn', '> 50 Thn'],
+        datasets: [{
+          data: [0, 0, 0, 0],
+          backgroundColor: 'rgba(96,165,250,0.9)',
+          borderColor: '#60a5fa',
+          borderWidth: 1,
+          borderRadius: 8,
+          maxBarThickness: 42
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 20 } },
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(148,163,184,0.08)' } },
+          x: { grid: { display: false } }
+        }
+      },
+      plugins: [{
+        id: 'umurTopValueLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.hidden) {
+              meta.data.forEach((bar, index) => {
+                const val = dataset.data[index];
+                if (val > 0) {
+                  ctx.save();
+                  ctx.font = 'bold 11px Inter, sans-serif';
+                  ctx.fillStyle = '#93c5fd';
+                  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                  ctx.fillText(val + ' Warga', bar.x, bar.y - 3);
+                  ctx.restore();
+                }
+              });
+            }
+          });
+        }
+      }]
+    });
+  }
+
+  if (ctxKeterangan && !chartKeteranganInstance) {
+    chartKeteranganInstance = new Chart(ctxKeterangan, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Pemilih', data: [], backgroundColor: 'rgba(16,185,129,0.85)', borderColor: '#10b981', borderWidth: 1, borderRadius: 5, maxBarThickness: 26 },
+          { label: 'Abu-Abu', data: [], backgroundColor: 'rgba(148,163,184,0.85)', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 5, maxBarThickness: 26 },
+          { label: 'Bukan Pemilih', data: [], backgroundColor: 'rgba(244,63,94,0.85)', borderColor: '#f43f5e', borderWidth: 1, borderRadius: 5, maxBarThickness: 26 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 25 } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => ` ${context.dataset.label}: ${context.parsed.y} Warga` } } },
+        scales: {
+          x: { ticks: { font: { size: 10, weight: '600' }, maxRotation: 45 }, grid: { color: 'rgba(148,163,184,0.06)' } },
+          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: 'rgba(148,163,184,0.08)' } }
+        }
+      },
+      plugins: [{
+        id: 'keteranganValueLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.hidden) {
+              meta.data.forEach((bar, index) => {
+                const val = dataset.data[index];
+                if (val > 0) {
+                  ctx.save();
+                  ctx.font = 'bold 10px Inter, sans-serif';
+                  ctx.fillStyle = datasetIndex === 0 ? '#6ee7b7' : (datasetIndex === 1 ? '#cbd5e1' : '#fda4af');
+                  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                  ctx.fillText(`${val}`, bar.x, bar.y - 3);
+                  ctx.restore();
+                }
+              });
+            }
+          });
+        }
+      }]
+    });
+  }
+}
+
+function updateCharts(data) {
+  if (!chartPemilihInstance) initCharts();
+
+  const combos = getAllRTRWCombos(data);
+  const pemilihPerCombo = new Array(combos.length).fill(0);
+  const abuPerCombo = new Array(combos.length).fill(0);
+  const bukanPerCombo = new Array(combos.length).fill(0);
+  data.forEach(w => {
+    if (!w.rt || !w.rw) return;
+    const idx = combos.indexOf(getRTRWKey(w));
+    if (idx < 0) return;
+    if (w.statusPemilih === 'Pemilih') pemilihPerCombo[idx]++;
+    else if (w.statusPemilih === 'Abu-Abu') abuPerCombo[idx]++;
+    else bukanPerCombo[idx]++;
+  });
+
+  if (chartPemilihInstance) {
+    chartPemilihInstance.data.labels = combos.length > 0
+      ? combos.map(c => {
+          const [rt, rw] = c.split('/');
+          return `RT${rt}/RW${rw}`;
+        })
+      : ['(Tidak ada data)'];
+    chartPemilihInstance.data.datasets[0].data = combos.length > 0 ? pemilihPerCombo : [0];
+    chartPemilihInstance.data.datasets[1].data = combos.length > 0 ? abuPerCombo : [0];
+    chartPemilihInstance.data.datasets[2].data = combos.length > 0 ? bukanPerCombo : [0];
+    chartPemilihInstance.update();
+  }
+
+  if (chartGenderInstance) {
+    chartGenderInstance.data.datasets[0].data = [
+      data.filter(w => w.jk === 'L').length,
+      data.filter(w => w.jk === 'P').length
+    ];
+    chartGenderInstance.update();
+  }
+
+  if (chartUmurInstance) {
+    const usia = w => Number(w.usia) || 0;
+    chartUmurInstance.data.datasets[0].data = [
+      data.filter(w => usia(w) < 17).length,
+      data.filter(w => usia(w) >= 17 && usia(w) <= 30).length,
+      data.filter(w => usia(w) >= 31 && usia(w) <= 50).length,
+      data.filter(w => usia(w) > 50).length
+    ];
+    chartUmurInstance.update();
+  }
+
+  const ketMap = {};
+  data.forEach(w => {
+    let ket = (w.keterangan || '').trim();
+    if (!ket) ket = '(Tanpa Keterangan)';
+    if (!ketMap[ket]) ketMap[ket] = { pemilih: 0, abuAbu: 0, bukanPemilih: 0, total: 0 };
+    if (w.statusPemilih === 'Pemilih') ketMap[ket].pemilih++;
+    else if (w.statusPemilih === 'Abu-Abu') ketMap[ket].abuAbu++;
+    else ketMap[ket].bukanPemilih++;
+    ketMap[ket].total++;
+  });
+
+  const sortedKet = Object.entries(ketMap).sort((a, b) => b[1].total - a[1].total);
+  if (chartKeteranganInstance) {
+    chartKeteranganInstance.data.labels = sortedKet.length > 0 ? sortedKet.map(i => i[0]) : ['(Tidak ada data)'];
+    chartKeteranganInstance.data.datasets[0].data = sortedKet.length > 0 ? sortedKet.map(i => i[1].pemilih) : [0];
+    chartKeteranganInstance.data.datasets[1].data = sortedKet.length > 0 ? sortedKet.map(i => i[1].abuAbu) : [0];
+    chartKeteranganInstance.data.datasets[2].data = sortedKet.length > 0 ? sortedKet.map(i => i[1].bukanPemilih) : [0];
+    chartKeteranganInstance.update();
+  }
+}
+
+function toggleAddKeteranganField() {
+  const statusSelect = document.getElementById('add-status');
+  const ketInput = document.getElementById('add-keterangan');
+  if (statusSelect.value === 'Pemilih') {
+    ketInput.disabled = false;
+    ketInput.classList.remove('opacity-60', 'cursor-not-allowed');
+    ketInput.placeholder = 'Ketik keterangan pemilih...';
+  } else {
+    ketInput.disabled = true;
+    ketInput.value = '';
+    ketInput.classList.add('opacity-60', 'cursor-not-allowed');
+    ketInput.placeholder = 'Aktif bila status Pemilih';
+  }
+}
+
+function openAddWargaModal() {
+  document.getElementById('modal-add')?.classList.remove('hidden');
+  toggleAddKeteranganField();
+}
+
+function closeAddWargaModal() {
+  document.getElementById('modal-add')?.classList.add('hidden');
+  document.getElementById('form-tambah-warga')?.reset();
+  toggleAddKeteranganField();
+}
+
+function saveWarga(event) {
+  event.preventDefault();
+  const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+  const newWarga = {
+    nama: getVal('add-nama').toUpperCase(),
+    jk: getVal('add-jk'),
+    usia: parseInt(getVal('add-usia')) || 0,
+    desa: getVal('add-desa').toUpperCase(),
+    rt: getVal('add-rt'),
+    rw: getVal('add-rw'),
+    tps: getVal('add-tps'),
+    nohp: getVal('add-nohp'),
+    statusPemilih: getVal('add-status') || 'Bukan Pemilih',
+    keterangan: getVal('add-keterangan')
+  };
+
+  closeAddWargaModal();
+  showToast(`Menyimpan data <strong>${escapeHtml(newWarga.nama)}</strong>...`);
+
+  if (API_URL && !API_URL.includes("YOUR_APPS_SCRIPT")) {
+    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "add", ...newWarga }) })
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === "success") {
+          showToast(`Warga <strong>${escapeHtml(newWarga.nama)}</strong> berhasil ditambahkan!`);
+          fetchDataFromSheet();
+        } else {
+          showToast("Gagal: " + (res.message || "Unknown error"));
+        }
+      })
+      .catch(err => { console.error("Error saveWarga:", err); showToast("Gagal menyimpan data."); });
+  }
+}
+
+/* ============================================================
+   PDF EXPORT
+============================================================ */
+function exportDataToPDF() {
+  if (filteredData.length === 0) { showToast('Tidak ada data untuk diekspor!'); return; }
+  try {
+    const jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+    const doc = new jsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    doc.setFontSize(14); doc.setFont("helvetica", "bold");
+    doc.text("DAFTAR PEMILIH & DATA WARGA", 14, 15);
+    doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.text(`Tanggal Unduh: ${new Date().toLocaleDateString('id-ID')} | Total: ${filteredData.length} Data`, 14, 21);
+
+    doc.autoTable({
+      head: [["NO", "NAMA", "JK", "USIA", "DESA", "RT", "RW", "TPS", "NO HP", "STATUS", "KETERANGAN"]],
+      body: filteredData.map((item, idx) => [
+        idx + 1, item.nama || '-', item.jk || '-', item.usia || 0, item.desa || '-',
+        String(item.rt || '-').padStart(3,'0'),
+        String(item.rw || '-').padStart(3,'0'),
+        String(item.tps || '-').padStart(2,'0'),
+        item.nohp || '-', item.statusPemilih || '-', item.keterangan || '-'
+      ]),
+      startY: 26,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [15, 23, 42] }
+    });
+    doc.save(`data_warga_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast('PDF berhasil diunduh!');
+  } catch (e) {
+    console.error("PDF Export Error:", e);
+    showToast('Gagal membuat file PDF.');
+  }
+}
+
+function exportRincianRT_RWToPDF() {
+  try {
+    const jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+    const doc = new jsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const statusFilter = document.getElementById('rincian-filter-status')?.value || 'ALL';
+    const searchVal = document.getElementById('rincian-search')?.value.toLowerCase().trim() || '';
+    let statusText = "Semua Status";
+    if (statusFilter === "Pemilih") statusText = "Khusus Pemilih";
+    if (statusFilter === "Abu-Abu") statusText = "Khusus Abu-Abu";
+    if (statusFilter === "Bukan Pemilih") statusText = "Khusus Bukan Pemilih";
+
+    doc.setFontSize(13); doc.setFont("helvetica", "bold");
+    doc.text("TABEL RINCIAN KETERANGAN PEMILIH PER RT/RW", 148.5, 12, { align: 'center' });
+    doc.setFontSize(8); doc.setFont("helvetica", "normal");
+    doc.text(`Filter: ${statusText} | Tanggal Unduh: ${new Date().toLocaleDateString('id-ID')}`, 148.5, 17, { align: 'center' });
+
+    let sourceData = dataWarga;
+    if (statusFilter !== 'ALL') sourceData = dataWarga.filter(w => w.statusPemilih === statusFilter);
+
+    const combos = getAllRTRWCombos(sourceData);
+
+    const ketMap = {};
+    sourceData.forEach(w => {
+      if (!w.rt || !w.rw) return;
+      let ket = (w.keterangan || '').trim();
+      if (!ket) ket = '(Tanpa Keterangan)';
+      if (searchVal && !ket.toLowerCase().includes(searchVal)) return;
+      if (!ketMap[ket]) ketMap[ket] = new Array(combos.length + 1).fill(0);
+      const idx = combos.indexOf(getRTRWKey(w));
+      if (idx >= 0) {
+        ketMap[ket][idx + 1]++;
+        ketMap[ket][0]++;
+      }
+    });
+
+    const headRow = ["NO", "KETERANGAN"];
+    combos.forEach(c => {
+      const [rt, rw] = c.split('/');
+      headRow.push(`RT${rt}/RW${rw}`);
+    });
+    headRow.push("TOTAL");
+
+    const sortedKets = Object.keys(ketMap).sort((a, b) => ketMap[b][0] - ketMap[a][0]);
+    const colTotals = new Array(combos.length + 1).fill(0);
+    const bodyRows = [];
+
+    sortedKets.forEach((ket, idx) => {
+      const rowData = ketMap[ket];
+      colTotals[0] += rowData[0];
+      const row = [idx + 1, ket];
+      for (let i = 1; i <= combos.length; i++) {
+        const count = rowData[i];
+        colTotals[i] += count;
+        row.push(count > 0 ? String(count) : '-');
+      }
+      row.push(String(rowData[0]));
+      bodyRows.push(row);
+    });
+
+    const footRow = ["", "TOTAL PER RT/RW:"];
+    for (let i = 1; i <= combos.length; i++) footRow.push(colTotals[i] > 0 ? String(colTotals[i]) : '-');
+    footRow.push(String(colTotals[0]));
+
+    if (bodyRows.length === 0) { showToast('Tidak ada data rincian untuk diekspor!'); return; }
+
+    doc.autoTable({
+      head: [headRow], body: bodyRows, foot: [footRow],
+      startY: 21,
+      margin: { top: 21, left: 6, right: 6, bottom: 10 },
+      styles: { fontSize: 6.5, cellPadding: 1.6, lineColor: [0,0,0], lineWidth: 0.15, textColor: [15,23,42] },
+      headStyles: { fillColor: [15,23,42], textColor: [255,255,255], fontStyle: 'bold', halign: 'center', fontSize: 6, valign: 'middle' },
+      footStyles: { fillColor: [226,232,240], textColor: [15,23,42], fontStyle: 'bold', halign: 'center', fontSize: 6.5, valign: 'middle' },
+      theme: 'grid'
+    });
+
+    doc.save(`rincian_pemilih_rt_rw_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast('PDF Rincian RT/RW berhasil diunduh!');
+  } catch (e) {
+    console.error("PDF Rincian RT/RW Error:", e);
+    showToast('Gagal membuat file PDF Rincian RT/RW.');
+  }
+}
+
+function exportRincianTpsToPDF() {
+  try {
+    const jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+    const doc = new jsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const statusFilter = document.getElementById('tps-filter-status')?.value || 'ALL';
+    const searchVal = document.getElementById('tps-search')?.value.toLowerCase().trim() || '';
+    let statusText = "Semua Status";
+    if (statusFilter === "Pemilih") statusText = "Khusus Pemilih";
+    if (statusFilter === "Abu-Abu") statusText = "Khusus Abu-Abu";
+    if (statusFilter === "Bukan Pemilih") statusText = "Khusus Bukan Pemilih";
+
+    doc.setFontSize(13); doc.setFont("helvetica", "bold");
+    doc.text("TABEL RINCIAN KETERANGAN PEMILIH PER TPS", 148.5, 12, { align: 'center' });
+    doc.setFontSize(8); doc.setFont("helvetica", "normal");
+    doc.text(`Filter: ${statusText} | Tanggal Unduh: ${new Date().toLocaleDateString('id-ID')}`, 148.5, 17, { align: 'center' });
+
+    const headRow = ["NO", "KETERANGAN"];
+    for (let i = 1; i <= DAFTAR_TPS.length; i++) headRow.push(`TPS${String(i).padStart(2,'0')}`);
+    headRow.push("TOTAL");
+
+    let sourceData = dataWarga;
+    if (statusFilter !== 'ALL') sourceData = dataWarga.filter(w => w.statusPemilih === statusFilter);
+
+    const ketMap = {};
+    sourceData.forEach(w => {
+      let ket = (w.keterangan || '').trim();
+      if (!ket) ket = '(Tanpa Keterangan)';
+      if (searchVal && !ket.toLowerCase().includes(searchVal)) return;
+      if (!ketMap[ket]) ketMap[ket] = new Array(DAFTAR_TPS.length + 1).fill(0);
+      const tpsNum = parseInt(w.tps, 10);
+      if (tpsNum >= 1 && tpsNum <= DAFTAR_TPS.length) {
+        ketMap[ket][tpsNum]++;
+        ketMap[ket][0]++;
+      }
+    });
+
+    const sortedKets = Object.keys(ketMap).sort((a, b) => ketMap[b][0] - ketMap[a][0]);
+    const colTotals = new Array(DAFTAR_TPS.length + 1).fill(0);
+    const bodyRows = [];
+
+    sortedKets.forEach((ket, idx) => {
+      const rowData = ketMap[ket];
+      colTotals[0] += rowData[0];
+      const row = [idx + 1, ket];
+      for (let tps = 1; tps <= DAFTAR_TPS.length; tps++) {
+        const count = rowData[tps];
+        colTotals[tps] += count;
+        row.push(count > 0 ? String(count) : '-');
+      }
+      row.push(String(rowData[0]));
+      bodyRows.push(row);
+    });
+
+    const footRow = ["", "TOTAL PER TPS:"];
+    for (let tps = 1; tps <= DAFTAR_TPS.length; tps++) footRow.push(colTotals[tps] > 0 ? String(colTotals[tps]) : '-');
+    footRow.push(String(colTotals[0]));
+
+    if (bodyRows.length === 0) { showToast('Tidak ada data rincian TPS untuk diekspor!'); return; }
+
+    doc.autoTable({
+      head: [headRow], body: bodyRows, foot: [footRow],
+      startY: 21,
+      margin: { top: 21, left: 6, right: 6, bottom: 10 },
+      styles: { fontSize: 6.5, cellPadding: 1.6, lineColor: [0,0,0], lineWidth: 0.15, textColor: [15,23,42] },
+      headStyles: { fillColor: [15,23,42], textColor: [255,255,255], fontStyle: 'bold', halign: 'center', fontSize: 6, valign: 'middle' },
+      footStyles: { fillColor: [226,232,240], textColor: [15,23,42], fontStyle: 'bold', halign: 'center', fontSize: 6.5, valign: 'middle' },
+      theme: 'grid'
+    });
+
+    doc.save(`rincian_pemilih_tps_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast('PDF Rincian TPS berhasil diunduh!');
+  } catch (e) {
+    console.error("PDF Rincian TPS Error:", e);
+    showToast('Gagal membuat file PDF Rincian TPS.');
+  }
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toast-message');
+  if (!toast || !toastMsg) return;
+  toastMsg.innerHTML = message;
+  toast.classList.remove('translate-y-20', 'opacity-0');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+}
+</script>
 </body>
 </html>
